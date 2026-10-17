@@ -1,3 +1,5 @@
+const { port } = require("./config/env");
+
 const express = require("express");
 
 // packages
@@ -9,8 +11,6 @@ const { connectToMongoDB } = require("./config/mongodb");
 
 // models
 const User = require("./models/user");
-
-const { port } = require("./config/env");
 
 // router
 const adminRouter = require("./routes/admin");
@@ -59,8 +59,7 @@ app.use(errorController.getErrorPage);
 
 // run the server after connecting to MongoDB
 connectToMongoDB(() => {
-  app.listen(port, () => {
+  app.listen(port, "0.0.0.0", () => {
     console.log(`Server is running on port ${port}`);
-    console.log(`http://localhost:${port}`);
   });
 });
