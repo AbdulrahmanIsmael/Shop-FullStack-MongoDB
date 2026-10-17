@@ -1,47 +1,64 @@
 const { MongoClient } = require("mongodb");
-
-// configuration
 const { mongodbUri } = require("./env");
 
-// create new MongoClient for connecting to the MongoDB server
-const client = new MongoClient(mongodbUri);
+const client = mongodbUri ? new MongoClient(mongodbUri) : null;
 
-// signal (internal variable in this file olny) to store the db object from the returned client object after connecting to the MongoDB server.
-// This is used to avoid creating multiple connections to the MongoDB server.
 let _db;
+let connectionPromise;
 
-// connect to the MongoDB server and execute the callback function
-const connectToMongoDB = (callback) => {
-  client
-    .connect()
-    .then(() => {
-      console.log("Connected to MongoDB Atlas");
-      _db = client.db("shop");
+// Reuse the same database connection across requests.
+const connectToMongoDB = () => {
+  if (_db) {
+    return Promise.resolve(_db);
+  }
 
-      callback();
-    })
-    .catch((err) => {
-      console.error("MongoDB connection failed:", err);
-      process.exit(1);
-    });
+  if (!client) {
+    return Promise.reject(
+      new Error("Missing MONGODB_URI environment variable"),
+    );
+  }
+
+  if (!connectionPromise) {
+    connectionPromise = client
+      .connect()
+      .then((connectedClient) => {
+        console.log("Connected to MongoDB Atlas");
+
+        _db = connectedClient.db("shop");
+
+        return _db;
+      })
+      .catch((err) => {
+        connectionPromise = null;
+
+        console.error("MongoDB connection failed:", err);
+
+        throw err;
+      });
+  }
+
+  return connectionPromise;
 };
 
-// get Database
+// Get the connected database.
 const getDB = () => {
-  if (_db) return _db;
-  return "No Database Found!";
+  if (_db) {
+    return _db;
+  }
+
+  throw new Error("MongoDB is not connected. Call connectToMongoDB() first.");
 };
 
-// disconnect from the MongoDB server
-const disconnectFromMongoDB = () => {
-  client
-    .close()
-    .then(() => {
-      console.log("Disconnected!");
-    })
-    .catch((err) => {
-      console.log("MongoDB disconnection failed: ", err);
-    });
+// Disconnect when explicitly needed.
+const disconnectFromMongoDB = async () => {
+  if (!client) return;
+
+  await client.close();
+
+  _db = undefined;
+  connectionPromise = null;
+
+  console.log("Disconnected from MongoDB Atlas");
 };
 
 module.exports = {

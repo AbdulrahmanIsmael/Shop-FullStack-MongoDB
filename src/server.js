@@ -1,65 +1,83 @@
 const { port } = require("./config/env");
 
 const express = require("express");
-
-// packages
 const path = require("path");
 const bodyParser = require("body-parser");
 
-// mongodb
 const { connectToMongoDB } = require("./config/mongodb");
-
-// models
 const User = require("./models/user");
 
-// router
 const adminRouter = require("./routes/admin");
 const productsRouter = require("./routes/products");
 const shopRouter = require("./routes/shop");
 
-// controllers
 const errorController = require("./controllers/error");
 
 const app = express();
 
-// setting up the templating engine
-app.set("view engine", "ejs"); // templating engine name
-app.set("views", path.join(__dirname, "views")); // folder path
+// EJS configuration
+app.set("view engine", "ejs");
+app.set("views", path.join(__dirname, "views"));
 
-// parsing data middelwares
+// Request body parsers
 app.use(bodyParser.urlencoded({ extended: false }));
 app.use(bodyParser.json());
 
-// static files middleware
+// Local development static files.
+// Vercel serves files in /public separately.
 app.use(express.static(path.join(__dirname, "..", "public")));
 
-//! provide the user to any incoming requests | UPDATED AFTER ADDING AUTH LOGIC
+// Ensure MongoDB is connected before accessing any models.
+app.use((req, res, next) => {
+  connectToMongoDB()
+    .then(() => next())
+    .catch((err) => {
+      console.error("MongoDB connection failed:", err);
+      res.status(500).send("Database connection failed");
+    });
+});
+
+// Provide a user to incoming requests.
 app.use((req, res, next) => {
   User.getUserById("6acf9af009cbbdf444954649")
     .then((user) => {
       if (!user) {
-        return errorController.getErrorPage(req, res, next); // Handle case where user doesn't exist
+        return errorController.getErrorPage(req, res, next);
       }
+
       req.user = new User(user.username, user.email, user.cart, user._id);
+
       next();
     })
     .catch((err) => {
-      console.error(err);
-      res.status(500).send("Server error"); // Handle server errors
+      console.error("Failed to load user:", err);
+      res.status(500).send("Server error");
     });
 });
 
-// consuming routers
+// Routes
 app.use("/admin", adminRouter);
 app.use(productsRouter);
 app.use(shopRouter);
 
-// 404 error page
+// 404 handler
 app.use(errorController.getErrorPage);
 
-// run the server after connecting to MongoDB
-connectToMongoDB(() => {
-  app.listen(port, "0.0.0.0", () => {
-    console.log(`Server is running on port ${port}`);
-  });
-});
+// Local development only.
+// Vercel imports the exported Express application instead.
+if (require.main === module) {
+  connectToMongoDB()
+    .then(() => {
+      app.listen(port, "0.0.0.0", () => {
+        console.log(`Server is running on port ${port}`);
+        console.log(`http://localhost:${port}`);
+      });
+    })
+    .catch((err) => {
+      console.error("Server failed to start:", err);
+      process.exit(1);
+    });
+}
+
+// Required for Vercel
+module.exports = app;
