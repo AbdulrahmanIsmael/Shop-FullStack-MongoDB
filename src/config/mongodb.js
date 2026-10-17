@@ -14,14 +14,15 @@ let _db;
 const connectToMongoDB = (callback) => {
   client
     .connect()
-    .then((client) => {
-      console.log("Connected!");
-      _db = client.db("shop"); // create new Database instance called 'shop' if not existed, and store it in _db to use it globally
+    .then(() => {
+      console.log("Connected to MongoDB Atlas");
+      _db = client.db("shop");
+
       callback();
     })
     .catch((err) => {
-      console.log("MongoDB connection failed: ", err);
-      throw new Error(err);
+      console.error("MongoDB connection failed:", err);
+      process.exit(1);
     });
 };
 
