@@ -32,7 +32,7 @@ The application uses a MongoDB database connection and follows the **MVC (Model-
 - **Runtime:** Node.js
 - **Framework:** Express.js
 - **View Engine:** EJS
-- **ORM:** Mongoose
+- **Driver:** MongoDB Native Driver
 - **Database:** MongoDB
 - **Environment:** dotenv
 - **Middleware:** body-parser
@@ -42,10 +42,10 @@ The application uses a MongoDB database connection and follows the **MVC (Model-
 ## 📁 Project Structure
 
 ```text
-shop-fullstack/
+shop-fullstack-mongodb/
 ├── config/         # Application configuration (database, server settings)
 ├── controllers/    # Route handlers and page controllers
-├── models/         # Sequelize models for database entities
+├── models/         # MongoDB models for database entities
 ├── routes/         # Route definitions for admin, shop, and products
 ├── public/         # Static assets (CSS, client-side JS)
 ├── views/          # EJS templates for rendering pages
@@ -60,14 +60,11 @@ shop-fullstack/
 
 ## 🔧 Environment Variables
 
-The app requires a local or remote MySQL database and the following environment variables:
+The app requires a local or remote MongoDB instance and the following environment variables:
 
 ```env
 PORT=3000
-DB_USER_PASSWORD=your_mysql_password
-DB_USER_NAME=your_mysql_username
-DB_NAME=your_database_name
-DB_HOST=127.0.0.1
+MONGODB_URI=your_mongodb_connection_string
 ```
 
 Create a `.env` file in the project root before running the app.
@@ -79,7 +76,7 @@ Create a `.env` file in the project root before running the app.
 ### Prerequisites
 
 - [Node.js](https://nodejs.org/)
-- A running MySQL server
+- A running MongoDB instance (local or [MongoDB Atlas](https://www.mongodb.com/atlas))
 
 ### Installation
 
@@ -87,7 +84,7 @@ Create a `.env` file in the project root before running the app.
 
    ```bash
    git clone <repository-url>
-   cd shop-fullstack
+   cd shop-fullstack-mongodb
    ```
 
 2. Install dependencies:
@@ -106,34 +103,4 @@ Start the server:
 npm start
 ```
 
-Open the app at `http://localhost:3000`.
-
----
-
-## ⚠️ Deployment Notes
-
-This project is currently configured to use a MySQL database.
-A free Vercel deployment will need a remote MySQL service and proper environment variables set in the Vercel dashboard.
-
-If you see `Please install mysql2 package manually` in deployment logs, make sure `mysql2` is listed in `dependencies` and the deployment installs production dependencies.
-
----
-
-## 🛣️ Roadmap
-
-- [ ] Improve deployment support for serverless platforms
-- [ ] Add authentication and user accounts
-- [ ] Add validation and better error handling
-- [ ] Add image upload support
-
----
-
-## 👨‍💻 Author
-
-**Abdulrahman Ismael**
-
----
-
-## 📄 License
-
-This project is licensed under the **ISC License**.
+Open the app at `http://localhost:3000`
