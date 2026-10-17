@@ -1,0 +1,27 @@
+{
+  "name": "shop-fullstack",
+  "version": "1.0.0",
+  "description": "full-stack (backend-focused) Application for an Online Shop built with Node.js and Express",
+  "license": "ISC",
+  "author": "Abdulrahman Ismael",
+  "type": "commonjs",
+  "main": "src/server.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "start": "nodemon src/server.js"
+  },
+  "dependencies": {
+    "body-parser": "^2.2.2",
+    "dotenv": "^17.4.2",
+    "ejs": "^6.0.1",
+    "express": "^5.2.1",
+    "mongodb": "^7.7.0",
+    "mysql2": "^3.23.2",
+    "sequelize": "^6.37.8"
+  },
+  "devDependencies": {
+    "eslint": "^10.12.0",
+    "globals": "^17.13.0",
+    "nodemon": "^3.1.14"
+  }
+}
