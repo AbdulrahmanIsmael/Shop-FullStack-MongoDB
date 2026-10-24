@@ -1,0 +1,109 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <%- include("../includes/metadata.ejs") %>
+    <link rel="stylesheet" href="/css/auth.css" />
+  </head>
+  <body>
+    <%- include("../includes/header.ejs") %>
+
+    <main class="content-wrapper auth-page-wrapper">
+      <div class="auth-container">
+        <div class="auth-card">
+          <div class="auth-card__header">
+            <div class="auth-card__icon-wrapper">
+              <svg class="auth-card__icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M16 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path>
+                <circle cx="8.5" cy="7" r="4"></circle>
+                <line x1="20" y1="8" x2="20" y2="14"></line>
+                <line x1="23" y1="11" x2="17" y2="11"></line>
+              </svg>
+            </div>
+            <h1 class="auth-card__title"><%= title %></h1>
+            <p class="auth-card__subtitle">Please enter your details to create an account</p>
+          </div>
+
+          <form action="/signup" method="POST" class="auth-form">
+            <div class="form-group">
+              <label for="email" class="form-label form-label-required">Email</label>
+              <div class="input-group">
+                <span class="input-group-addon">
+                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <rect x="2" y="4" width="20" height="16" rx="2"></rect>
+                    <path d="m22 7-10 7L2 7"></path>
+                  </svg>
+                </span>
+                <input
+                  type="email"
+                  name="email"
+                  id="email"
+                  class="form-input"
+                  placeholder="you@example.com"
+                  required
+                  autocomplete="email"
+                />
+              </div>
+              <small class="form-help-text">Enter your email address</small>
+            </div>
+
+            <div class="form-group">
+              <label for="password" class="form-label form-label-required">Password</label>
+              <div class="input-group">
+                <span class="input-group-addon">
+                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect>
+                    <path d="M7 11V7a5 5 0 0 1 10 0v4"></path>
+                  </svg>
+                </span>
+                <input
+                  type="password"
+                  name="password"
+                  id="password"
+                  class="form-input"
+                  placeholder="Enter your password"
+                  required
+                  autocomplete="new-password"
+                />
+              </div>
+            </div>
+
+            <div class="form-group">
+              <label for="confirm-password" class="form-label form-label-required">Confirm Password</label>
+              <div class="input-group">
+                <span class="input-group-addon">
+                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect>
+                    <path d="M7 11V7a5 5 0 0 1 10 0v4"></path>
+                  </svg>
+                </span>
+                <input
+                  type="password"
+                  name="confirmPassword"
+                  id="confirmPassword"
+                  class="form-input"
+                  placeholder="Confirm your password"
+                  required
+                  autocomplete="new-password"
+                />
+              </div>
+            </div>
+
+            <div class="auth-form-actions">
+              <button type="submit" class="btn btn-primary auth-submit-btn">
+                <span>Sign Up</span>
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                  <path d="M16 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path>
+                  <circle cx="8.5" cy="7" r="4"></circle>
+                  <line x1="20" y1="8" x2="20" y2="14"></line>
+                  <line x1="23" y1="11" x2="17" y2="11"></line>
+                </svg>
+              </button>
+            </div>
+          </form>
+        </div>
+      </div>
+    </main>
+
+    <%- include("../includes/footer.ejs") %>
+  </body>
+</html>

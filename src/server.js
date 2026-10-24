@@ -1,19 +1,31 @@
-const { port } = require("./config/env");
+const { port, mongodbUri, sessionSecret } = require("./config/env");
 
 const express = require("express");
 const path = require("path");
 const bodyParser = require("body-parser");
 
-const { connectToMongoDB } = require("./config/mongodb");
+const session = require("express-session");
+const MongoDBSession = require("connect-mongodb-session")(session);
+
+const mongoose = require("mongoose");
+
 const User = require("./models/user");
 
 const adminRouter = require("./routes/admin");
 const productsRouter = require("./routes/products");
 const shopRouter = require("./routes/shop");
+const authRouter = require("./routes/auth");
 
 const errorController = require("./controllers/error");
 
 const app = express();
+
+// initialize session store for MongoDB
+const store = new MongoDBSession({
+  uri: mongodbUri,
+  databaseName: "shop", // used in case db name not in the uri string
+  collection: "sessions",
+});
 
 // EJS configuration
 app.set("view engine", "ejs");
@@ -23,50 +35,66 @@ app.set("views", path.join(__dirname, "views"));
 app.use(bodyParser.urlencoded({ extended: false }));
 app.use(bodyParser.json());
 
-// Local development static files.
-// Vercel serves files in /public separately.
 app.use(express.static(path.join(__dirname, "..", "public")));
 
-// Ensure MongoDB is connected before accessing any models.
-app.use((req, res, next) => {
-  connectToMongoDB()
-    .then(() => next())
-    .catch((err) => {
-      console.error("MongoDB connection failed:", err);
-      res.status(500).send("Database connection failed");
-    });
-});
+// initiale express session middleware
+app.use(
+  session({
+    secret: sessionSecret,
+    resave: false,
+    saveUninitialized: false,
+    store: store, // changing store from the default (memory) to the database using connect-mongodb-session package
+  }),
+);
 
-// Provide a user to incoming requests.
 app.use((req, res, next) => {
-  User.getUserById("6acf9af009cbbdf444954649")
+  const userId = req.session.userId;
+  if (!userId) {
+    return next();
+  }
+  User.findById(userId)
     .then((user) => {
-      if (!user) {
-        return errorController.getErrorPage(req, res, next);
-      }
-
-      req.user = new User(user.username, user.email, user.cart, user._id);
-
-      next();
+      req.user = user;
+      return next();
     })
     .catch((err) => {
-      console.error("Failed to load user:", err);
-      res.status(500).send("Server error");
+      console.log("Error: ", err);
+      res.status(500).send("Internal Server Error!");
     });
 });
+
+// production middleware - not running on local dev
+if (require.main !== module) {
+  app.use((req, res, next) => {
+    // connect to mongoose database
+    mongoose
+      .connect(mongodbUri)
+      .then(() => {
+        console.log("Connected to MongoDB");
+        next();
+      })
+      .catch((err) => {
+        console.error("Failed to connect to MongoDB:", err);
+        res.status(500).send("Server error");
+      });
+  });
+}
 
 // Routes
 app.use("/admin", adminRouter);
 app.use(productsRouter);
 app.use(shopRouter);
+app.use(authRouter);
 
 // 404 handler
 app.use(errorController.getErrorPage);
 
 // Local development only.
-// Vercel imports the exported Express application instead.
 if (require.main === module) {
-  connectToMongoDB()
+  mongoose
+    .connect(mongodbUri, {
+      dbName: "shop",
+    })
     .then(() => {
       app.listen(port, "0.0.0.0", () => {
         console.log(`Server is running on port ${port}`);
@@ -74,7 +102,7 @@ if (require.main === module) {
       });
     })
     .catch((err) => {
-      console.error("Server failed to start:", err);
+      console.error("Failed to connect to MongoDB:", err);
       process.exit(1);
     });
 }

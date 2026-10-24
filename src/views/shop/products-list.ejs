@@ -29,10 +29,12 @@
                 <% } %>
                   <!-- Add To Cart Button -->
                  <!-- ! Change type button to submit later when adding the cart feature -->
-                <form action="/cart" method="POST" class="add-to-cart-btn">
-                  <button type="submit" aria-label="Add to Cart">🛒</button>
-                  <input type="hidden" name="productId" value="<%= product._id %>">
-                </form>
+                <% if (isAuth) { %>
+                  <form action="/cart" method="POST" class="add-to-cart-btn">
+                    <button type="submit" aria-label="Add to Cart">🛒</button>
+                    <input type="hidden" name="productId" value="<%= product._id %>">
+                  </form>
+                <% } %>
 
                 <div class="product-card__content">
                   <h3 class="product-card__name"><%= product.title %></h3>

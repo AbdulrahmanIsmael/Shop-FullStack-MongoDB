@@ -1,72 +1,52 @@
-const { ObjectId } = require("mongodb");
-const { getDB } = require("../config/mongodb");
-const Cart = require("./cart");
+const { Schema, model } = require("mongoose");
 
-class Order {
-  constructor(id, items) {
-    this.userId = id;
-    this.currentItems = items;
-  }
+const Product = require("./product");
 
-  // create new order
-  createOrder() {
-    const db = getDB();
-    return Order.#getProductsDetails(this.currentItems)
-      .then((products) => {
-        const order = {
-          products: products,
-          userId: new ObjectId(this.userId),
-          createdAt: new Date().toISOString(),
-        };
+const orderSchema = new Schema({
+  products: [
+    {
+      title: { type: String, required: true },
+      price: { type: Number, required: true },
+      description: String,
+      imageUrl: String,
+      quantity: { type: Number, required: true },
+    },
+  ],
+  userId: {
+    type: Schema.Types.ObjectId,
+    ref: "User",
+    required: true,
+  },
+  createdAt: {
+    type: String,
+  },
+});
 
-        return db.collection("orders").insertOne(order);
-      })
-      .then(() => {
-        Cart.clearCart(this.userId);
-        return db
-          .collection("users")
-          .updateOne(
-            { _id: new ObjectId(this._id) },
-            { $set: { cart: { items: [] } } },
-          )
-          .then(() => console.log("Order created successfully!"))
-          .catch((err) => console.log(err));
-      })
-      .catch((err) => console.log(err));
-  }
+orderSchema.statics.createOrder = function (cartItems, userId) {
+  const productIds = cartItems.map((item) => item.productId);
+  if (!productIds.length) return Promise.reject("No Products included!");
 
-  // get orders from user
-  static getOrders(userId) {
-    const db = getDB();
-    return db
-      .collection("orders")
-      .find({ userId: new ObjectId(userId) })
-      .toArray()
-      .then((orders) => orders)
-      .catch((err) => console.log(err));
-  }
+  return Product.find({ _id: { $in: productIds } })
+    .select("title price description imageUrl")
+    .then((products) => {
+      const orderItems = products.map((product) => ({
+        ...product.toObject(),
+        quantity: cartItems.find((item) => {
+          const itemProdId = item.productId._id || item.productId;
+          return itemProdId.toString() === product._id.toString();
+        })?.quantity,
+      }));
 
-  //* get products details from Ids
-  static #getProductsDetails(productItems) {
-    const db = getDB();
-    const productIds = productItems.map((p) => new ObjectId(p.productId));
+      return new this({
+        products: orderItems,
+        userId,
+        createdAt: new Date().toISOString(),
+      }).save();
+    })
+    .then(() => console.log("Order created!"))
+    .catch((err) => console.log(err));
+};
 
-    return db
-      .collection("products")
-      .find({
-        _id: { $in: productIds },
-      })
-      .toArray()
-      .then((products) =>
-        products.map((p) => ({
-          ...p,
-          quantity: productItems.find(
-            (i) => i.productId.toString() === p._id.toString(),
-          ).quantity,
-        })),
-      )
-      .catch((err) => console.log(err));
-  }
-}
+const Order = model("Order", orderSchema);
 
 module.exports = Order;

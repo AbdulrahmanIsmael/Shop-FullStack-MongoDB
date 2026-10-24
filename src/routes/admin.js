@@ -6,11 +6,11 @@ const router = express.Router();
 
 router.get("/add-product", adminController.getAddProductPage);
 
-router.get("/edit-product/:productId", adminController.getEditProductPage);
+router.post("/add-product", adminController.postProducts);
 
 router.get("/products", adminController.getAdminProductsPage);
 
-router.post("/add-product", adminController.postProducts);
+router.get("/edit-product/:productId", adminController.getEditProductPage);
 
 router.post("/edit-product", adminController.postEditProduct);
 

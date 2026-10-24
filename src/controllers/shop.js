@@ -1,16 +1,16 @@
-const Cart = require("../models/cart");
-const Order = require("../models/order");
 const Product = require("../models/product");
+const Order = require("../models/order");
 
 const { handleError } = require("../utils/errorHandler");
 
 // get the main page
 exports.getHome = (req, res) => {
-  Product.getAll()
+  Product.find()
     .then((products) => {
       res.render("shop/index", {
         title: "Shop",
         products,
+        isAuth: req.session.isLoggedIn,
       });
     })
     .catch((err) => handleError(res, err));
@@ -19,10 +19,8 @@ exports.getHome = (req, res) => {
 // get the cart page
 exports.getCart = (req, res) => {
   const user = req.user;
-  const cart = new Cart(user._id, user.cart.items);
-
-  cart
-    .getItems()
+  user
+    .getCart()
     .then((products) => {
       const totalPrice = products.reduce(
         (acc, prod) => +acc + +prod?.price * +prod?.quantity || 0,
@@ -33,6 +31,7 @@ exports.getCart = (req, res) => {
         title: "My Cart",
         products: products,
         totalPrice: totalPrice ?? 0,
+        isAuth: req.session.isLoggedIn,
       });
     })
     .catch((err) => handleError(res, err));
@@ -40,14 +39,14 @@ exports.getCart = (req, res) => {
 
 // get the orders page
 exports.getOrders = (req, res) => {
-  const user = req.user;
+  const userId = req.session.userId;
 
-  Order.getOrders(user._id)
+  Order.find({ userId })
     .then((orders) => {
-      console.log(orders);
       res.render("shop/orders", {
         title: "My Orders",
         orders,
+        isAuth: req.session.isLoggedIn,
       });
     })
     .catch((err) => handleError(res, err));
@@ -58,22 +57,16 @@ exports.postCart = (req, res) => {
   const user = req.user;
   const productId = req.body.productId;
 
-  const cart = new Cart(user._id, user.cart.items);
-
-  cart
-    .addItem(productId)
+  user
+    .addToCart(productId)
     .then(() => res.redirect("/cart"))
     .catch((err) => handleError(res, err));
 };
 
 exports.postRemoveFromCart = (req, res) => {
   const user = req.user;
-  const productId = req.body.productId;
-
-  const cart = new Cart(user._id, user.cart.items);
-
-  cart
-    .deleteItem(productId)
+  user
+    .removeItemFromCart(req.body.productId)
     .then(() => res.redirect("/cart"))
     .catch((err) => handleError(res, err));
 };
@@ -81,10 +74,10 @@ exports.postRemoveFromCart = (req, res) => {
 // post new order
 exports.postOrder = (req, res) => {
   const user = req.user;
-  const order = new Order(user._id, user.cart.items);
-
-  order
-    .createOrder()
+  user
+    .populate("cart.items.productId")
+    .then((user) => Order.createOrder(user.cart.items, req.user._id))
+    .then(() => user.clearCart())
     .then(() => res.redirect("/orders"))
     .catch((err) => handleError(res, err));
 };

@@ -1,38 +1,89 @@
-const { ObjectId } = require("mongodb");
-const { getDB } = require("../config/mongodb");
+const { Schema, model } = require("mongoose");
 
-class User {
-  constructor(username, email, cart = { items: [] }, id) {
-    this.username = username;
-    this.email = email;
-    this.cart = cart;
-    this._id = id
-      ? id instanceof ObjectId
-        ? id
-        : new ObjectId(id)
-      : undefined;
+const userSchema = new Schema({
+  email: {
+    type: String,
+    required: true,
+  },
+  password: {
+    type: String,
+    required: true,
+  },
+  cart: {
+    items: [
+      {
+        productId: {
+          type: Schema.Types.ObjectId,
+          ref: "Product",
+          required: true,
+        },
+        quantity: {
+          type: Number,
+          required: true,
+        },
+      },
+    ],
+  },
+});
+
+userSchema.methods.addToCart = function (productId) {
+  const updatedCart = { items: [...this.cart.items] };
+
+  const productIndex = updatedCart.items.findIndex(
+    (item) => item.productId.toString() === productId.toString(),
+  );
+
+  // if existed, increase quantity, if not, add it
+  if (productIndex >= 0) {
+    updatedCart.items[productIndex].quantity =
+      +updatedCart.items[productIndex].quantity + 1;
+  } else {
+    updatedCart.items.push({
+      productId: productId,
+      quantity: 1,
+    });
   }
 
-  // add new user
-  save() {
-    const db = getDB();
-    return db
-      .collection("users")
-      .insertOne(this)
-      .then(() => console.log("Welcome To Our Shop new user!"))
-      .catch((err) => console.log(err));
-  }
+  this.cart = updatedCart;
 
-  // get user by ID
-  static getUserById(id) {
-    const db = getDB();
+  return this.save()
+    .then(() => console.log("Cart has been updated!"))
+    .catch((err) => console.log(err));
+};
 
-    return db
-      .collection("users")
-      .findOne({ _id: new ObjectId(id) })
-      .then((user) => user)
-      .catch((err) => console.log(err));
-  }
-}
+userSchema.methods.getCart = function () {
+  return this.populate("cart.items.productId", "-_id -userId -__v")
+    .then((user) => {
+      return user.cart.items.map((item) => ({
+        ...item.productId.toObject(),
+        quantity: item.quantity,
+        _id: item._id,
+      }));
+    })
+    .catch((err) => console.log(err));
+};
+
+userSchema.methods.removeItemFromCart = function (productId) {
+  const updatedCart = {
+    items: this.cart.items.filter(
+      (item) => item._id.toString() !== productId.toString(),
+    ),
+  };
+  this.cart = updatedCart;
+
+  return this.save()
+    .then(() => console.log("Removed item from cart"))
+    .catch((err) => console.log(err));
+};
+
+userSchema.methods.clearCart = function () {
+  this.cart.items = [];
+
+  return this.save()
+    .then(() => console.log("Cart has been cleared"))
+    .catch((err) => console.log(err));
+};
+
+const User = model("User", userSchema);
 
 module.exports = User;

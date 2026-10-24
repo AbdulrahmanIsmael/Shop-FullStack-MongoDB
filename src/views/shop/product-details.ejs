@@ -54,15 +54,17 @@
               <p class="product-details__desc"><%= product.description %></p>
             </div>
 
-            <div class="product-details__actions">
-              <form action="/cart" method="POST" class="add-to-cart-form">
-                <input type="hidden" name="productId" value="<%= product._id %>">
-                <button type="submit" class="btn btn-primary add-to-cart-btn" <%= product.quantity <= 0 ? 'disabled' : '' %>>
-                  <span class="btn-icon">🛒</span> 
-                  <%= product.quantity > 0 ? 'Add To Cart' : 'Out of Stock' %>
-                </button>
-              </form>
-            </div>
+            <% if(isAuth) { %>
+              <div class="product-details__actions">
+                <form action="/cart" method="POST" class="add-to-cart-form">
+                  <input type="hidden" name="productId" value="<%= product._id %>">
+                  <button type="submit" class="btn btn-primary add-to-cart-btn" <%= product.quantity <= 0 ? 'disabled' : '' %>>
+                    <span class="btn-icon">🛒</span> 
+                    <%= product.quantity > 0 ? 'Add To Cart' : 'Out of Stock' %>
+                  </button>
+                </form>
+              </div>
+            <% } %>
           </div>
         </article>
       </div>
